@@ -1,6 +1,10 @@
 import pandas as pd
 import numpy as np
-
+from sklearn import datasets
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import KFold
 
 def loading_data():
     # x train
@@ -44,6 +48,18 @@ def main():
     # Your main program logic goes here
     x_train, y_train, x_test, y_test = loading_data()
     #print(x_train)
+    class_weights = {-1: 1, 1: 5}  # Adjust the weights as needed
+
+    # Create an instance of the SVM classifier with class weights
+    svm_classifier = SVC(kernel='linear', C=1, class_weight=class_weights)
+    svm_classifier.fit(x_train, y_train)
+
+    # Make predictions on the test data
+    y_pred = svm_classifier.predict(x_test)
+
+    # Calculate and print the accuracy of the model
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f'Accuracy: {accuracy:.2f}')
 
 
 if __name__ == "__main__":
