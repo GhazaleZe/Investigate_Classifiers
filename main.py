@@ -6,6 +6,7 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import KFold
 
+
 def loading_data():
     # x train
     custom_column_names = ["instance", "feature", "value"]
@@ -47,11 +48,16 @@ def loading_data():
 def main():
     # Your main program logic goes here
     x_train, y_train, x_test, y_test = loading_data()
-    #print(x_train)
-    class_weights = {-1: 1, 1: 5}  # Adjust the weights as needed
+    extra_columns_in_test = [col for col in x_train.columns if col not in x_test.columns]
 
+    # Drop these extra columns from the training dataset
+    x_train.drop(extra_columns_in_test, axis=1, inplace=True)
+    class_weights = {-1: 1, 1: 5}
+    # print(x_train)
+    C = 0.8  # You can adjust this value as needed
     # Create an instance of the SVM classifier with class weights
-    svm_classifier = SVC(kernel='linear', C=1, class_weight=class_weights)
+    svm_classifier = SVC(kernel='linear', C=C, class_weight=class_weights)
+    y_train = y_train.values.ravel()
     svm_classifier.fit(x_train, y_train)
 
     # Make predictions on the test data
