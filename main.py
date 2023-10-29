@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import KFold
+import matplotlib.pyplot as plt
 
 
 def loading_data():
@@ -45,27 +46,51 @@ def loading_data():
     return df_pivot, df_train_Y, df_pivot_test, df_test_Y
 
 
+def SVM_l2_regularization_Kfold(x_train, y_train):
+    class_weights = {-1: 1, 1: 5}
+
+    k = 5  # Number of folds for cross-validation
+    C_values = [0.001, 0.1, 1, 10]
+    mean_scores = []
+
+    for c in C_values:
+        svm_classifier = SVC(kernel='linear', C=c, class_weight=class_weights)
+        kf = KFold(n_splits=k)
+        scores = cross_val_score(svm_classifier, x_train, y_train, cv=kf)
+        mean_accuracy = np.mean(scores)
+        mean_scores.append(mean_accuracy)
+        print(f'C={c}: Mean Accuracy = {mean_accuracy:.2f}')
+    plt.figure(figsize=(8, 6))
+    plt.plot(C_values, mean_scores, marker='o', linestyle='-')
+    plt.title("Mean Accuracy vs. C Values")
+    plt.xlabel("C Values")
+    plt.ylabel("Mean Accuracy")
+    plt.xscale('log')  # Use a log scale for the x-axis if C values vary widely
+    plt.grid(True)
+    plt.show()
+    return mean_scores
+
+
 def main():
     # Your main program logic goes here
     x_train, y_train, x_test, y_test = loading_data()
+    y_train = y_train.values.ravel()
+    mean_scores = SVM_l2_regularization_Kfold(x_train, y_train)
     extra_columns_in_test = [col for col in x_train.columns if col not in x_test.columns]
 
     # Drop these extra columns from the training dataset
     x_train.drop(extra_columns_in_test, axis=1, inplace=True)
-    class_weights = {-1: 1, 1: 5}
-    # print(x_train)
-    C = 0.8  # You can adjust this value as needed
-    # Create an instance of the SVM classifier with class weights
-    svm_classifier = SVC(kernel='linear', C=C, class_weight=class_weights)
-    y_train = y_train.values.ravel()
-    svm_classifier.fit(x_train, y_train)
 
-    # Make predictions on the test data
-    y_pred = svm_classifier.predict(x_test)
+    # svm_classifier.fit(x_train, y_train)
+    #
+    # # Make predictions on the test data
+    # y_pred = svm_classifier.predict(x_test)
+    #
+    # # Calculate and print the accuracy of the model
+    # accuracy = accuracy_score(y_test, y_pred)
+    # print(f'Accuracy: {accuracy:.2f}')
 
-    # Calculate and print the accuracy of the model
-    accuracy = accuracy_score(y_test, y_pred)
-    print(f'Accuracy: {accuracy:.2f}')
+    # *****************************************
 
 
 if __name__ == "__main__":
