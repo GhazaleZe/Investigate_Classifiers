@@ -109,7 +109,35 @@ def Lasso_Regularization(x_train, y_train, x_test, y_test):
     return X_selected
 
 
-def BoLasso(x_train, y_train, alpha=0.01):
+def Tuning_Lasso(x_train, y_train):
+    alphas = np.logspace(-4, 4, 9)  # Varying from 0.0001 to 10,000
+
+    # Create an empty list to store cross-validated scores
+    cv_scores = []
+
+    # Perform cross-validation for each alpha
+    for alpha in alphas:
+        lasso = Lasso(alpha=alpha, max_iter=10000)
+        scores = cross_val_score(lasso, x_train, y_train, cv=5, scoring='neg_mean_squared_error')
+        cv_scores.append(-scores.mean())  # Convert to positive MSE values
+
+    # Find the alpha with the lowest MSE
+    best_alpha = alphas[cv_scores.index(min(cv_scores))]
+    best_mse = min(cv_scores)
+
+    print(f"Best alpha: {best_alpha}")
+    print(f"Lowest MSE: {best_mse}")
+    plt.figure(figsize=(10, 6))
+    plt.semilogx(alphas, cv_scores, marker='o')
+    plt.title('Cross-Validated Mean Squared Error vs. Alpha')
+    plt.xlabel('Alpha')
+    plt.ylabel('Mean Squared Error (MSE)')
+    plt.grid(True)
+    plt.show()
+    return best_alpha
+
+
+def BoLasso(x_train, y_train, alpha=0.001):
     n_bootstraps = 1000
     selected_features = []
 
@@ -145,8 +173,8 @@ def main():
     # Drop these extra columns from the training dataset
     x_train.drop(extra_columns_in_test, axis=1, inplace=True)
     # feature_coefficients_SVM = SVM_Prediction(x_train, y_train, x_test, y_test)
+    #Tuning_Lasso(x_train, y_train)
     Lasso_selected_features, X_Lasso_selected_features = BoLasso(x_train, y_train)
-    print(X_Lasso_selected_features)
 
 
 if __name__ == "__main__":
