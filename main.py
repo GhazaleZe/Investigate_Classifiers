@@ -95,16 +95,16 @@ def SVM_Prediction(x_train, y_train, x_test, y_test):
 
     feature_coefficients = dict(zip(feature_names, coefficients[0]))  # Use coefficients[0] for class -1
 
-    print(feature_coefficients)
+    #print(feature_coefficients)
     return feature_coefficients
 
 
 def Lasso_Regularization(x_train, y_train, x_test, y_test):
-    alpha = 0.01  # Adjust the regularization strength
+    alpha = 0.01
     lasso = Lasso(alpha=alpha)
     lasso.fit(x_train, y_train)
     selected_features = [feature for feature, coef in enumerate(lasso.coef_) if coef != 0]
-    print(f'Selected features: {selected_features}')
+    #print(f'Selected features: {selected_features}')
     X_selected = x_train[:, selected_features]
     return X_selected
 
@@ -156,9 +156,20 @@ def BoLasso(x_train, y_train, alpha=0.001):
     threshold = n_bootstraps // 2
     final_selected_features = np.where(feature_selection_count >= threshold)[0]
 
-    print("Selected Features:", final_selected_features)
+    #print("Selected Features:", final_selected_features)
     X_selected = x_train.iloc[:, final_selected_features]
     return final_selected_features, X_selected
+
+
+def Lasso_SVM(x_train, y_train, x_test, y_test):
+    Lasso_selected_features, X_Lasso_selected_features = BoLasso(x_train, y_train)
+    extra_columns_in_test = [col for col in x_train.columns if col not in X_Lasso_selected_features]
+
+    # Drop these extra columns from the training dataset
+    x_train.drop(extra_columns_in_test, axis=1, inplace=True)
+    x_test.drop(extra_columns_in_test, axis=1, inplace=True)
+    feature_coefficients = SVM_Prediction(x_train, y_train, x_test, y_test)
+    return feature_coefficients
 
 
 def main():
@@ -172,9 +183,16 @@ def main():
 
     # Drop these extra columns from the training dataset
     x_train.drop(extra_columns_in_test, axis=1, inplace=True)
-    # feature_coefficients_SVM = SVM_Prediction(x_train, y_train, x_test, y_test)
-    #Tuning_Lasso(x_train, y_train)
-    Lasso_selected_features, X_Lasso_selected_features = BoLasso(x_train, y_train)
+    feature_coefficients_SVM = SVM_Prediction(x_train, y_train, x_test, y_test)
+
+    # Tuning_Lasso(x_train, y_train)
+    feature_coefficients_Lasso = Lasso_SVM(x_train, y_train, x_test, y_test)
+    for key in feature_coefficients_SVM:
+        if key not in feature_coefficients_Lasso:
+            feature_coefficients_Lasso[key] = 0
+    sorted_feature_coefficients_Lasso = {key: feature_coefficients_Lasso[key] for key in sorted(feature_coefficients_Lasso)}
+    print(feature_coefficients_SVM)
+    print(sorted_feature_coefficients_Lasso)
 
 
 if __name__ == "__main__":
