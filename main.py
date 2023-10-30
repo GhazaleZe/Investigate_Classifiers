@@ -43,6 +43,10 @@ def loading_data():
 
     df_test_Y = pd.read_csv("test_Y.csv", names=custom_Y_names)
 
+    # drop instance column
+    df_pivot.drop('instance', axis=1, inplace=True)
+    df_pivot_test.drop('instance', axis=1, inplace=True)
+
     return df_pivot, df_train_Y, df_pivot_test, df_test_Y
 
 
@@ -50,7 +54,7 @@ def SVM_l2_regularization_Kfold(x_train, y_train):
     class_weights = {-1: 1, 1: 5}
 
     k = 5  # Number of folds for cross-validation
-    C_values = [0.001, 0.1, 1, 10]
+    C_values = [0.001, 0.01, 0.1, 1, 10]
     mean_scores = []
 
     for c in C_values:
@@ -71,26 +75,42 @@ def SVM_l2_regularization_Kfold(x_train, y_train):
     return mean_scores
 
 
+def SVM_Prediction(x_train, y_train, x_test, y_test):
+    class_weights = {-1: 1, 1: 5}
+    svm_classifier = SVC(kernel='linear', C=0.01, class_weight=class_weights)
+    svm_classifier.fit(x_train, y_train)
+
+    # Make predictions on the test data
+    y_pred = svm_classifier.predict(x_test)
+
+    # Calculate and print the accuracy of the model
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f'Accuracy: {accuracy:.2f}')
+    plt.figure(figsize=(8, 6))
+
+    feature_names = x_train.columns
+
+    coefficients = svm_classifier.coef_
+
+    feature_coefficients = dict(zip(feature_names, coefficients[0]))  # Use coefficients[0] for class -1
+
+    print(feature_coefficients)
+    return feature_coefficients
+
+
 def main():
     # Your main program logic goes here
     x_train, y_train, x_test, y_test = loading_data()
     y_train = y_train.values.ravel()
-    mean_scores = SVM_l2_regularization_Kfold(x_train, y_train)
+    # extra_columns_in_train = [col for col in x_train.columns if col not in x_test.columns]
+    # for col in extra_columns_in_train:
+    #     x_test[col] = 0
+    # mean_scores = SVM_l2_regularization_Kfold(x_train, y_train)
     extra_columns_in_test = [col for col in x_train.columns if col not in x_test.columns]
 
     # Drop these extra columns from the training dataset
     x_train.drop(extra_columns_in_test, axis=1, inplace=True)
-
-    # svm_classifier.fit(x_train, y_train)
-    #
-    # # Make predictions on the test data
-    # y_pred = svm_classifier.predict(x_test)
-    #
-    # # Calculate and print the accuracy of the model
-    # accuracy = accuracy_score(y_test, y_pred)
-    # print(f'Accuracy: {accuracy:.2f}')
-
-    # *****************************************
+    SVM_Prediction(x_train, y_train, x_test, y_test)
 
 
 if __name__ == "__main__":

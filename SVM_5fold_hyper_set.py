@@ -71,26 +71,14 @@ def SVM_l2_regularization_Kfold(x_train, y_train):
     return mean_scores
 
 
+
+
 def main():
     # Your main program logic goes here
     x_train, y_train, x_test, y_test = loading_data()
     y_train = y_train.values.ravel()
     mean_scores = SVM_l2_regularization_Kfold(x_train, y_train)
-    extra_columns_in_test = [col for col in x_train.columns if col not in x_test.columns]
 
-    # Drop these extra columns from the training dataset
-    x_train.drop(extra_columns_in_test, axis=1, inplace=True)
-
-    # svm_classifier.fit(x_train, y_train)
-    #
-    # # Make predictions on the test data
-    # y_pred = svm_classifier.predict(x_test)
-    #
-    # # Calculate and print the accuracy of the model
-    # accuracy = accuracy_score(y_test, y_pred)
-    # print(f'Accuracy: {accuracy:.2f}')
-
-    # *****************************************
 
 
 if __name__ == "__main__":
