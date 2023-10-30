@@ -1,11 +1,12 @@
 import pandas as pd
 import numpy as np
-from sklearn import datasets
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import KFold
 import matplotlib.pyplot as plt
+from sklearn.linear_model import Lasso
+from sklearn.utils import resample
 
 
 def loading_data():
@@ -98,8 +99,41 @@ def SVM_Prediction(x_train, y_train, x_test, y_test):
     return feature_coefficients
 
 
+def Lasso_Regularization(x_train, y_train, x_test, y_test):
+    alpha = 0.01  # Adjust the regularization strength
+    lasso = Lasso(alpha=alpha)
+    lasso.fit(x_train, y_train)
+    selected_features = [feature for feature, coef in enumerate(lasso.coef_) if coef != 0]
+    print(f'Selected features: {selected_features}')
+    X_selected = x_train[:, selected_features]
+    return X_selected
+
+
+def BoLasso(x_train, y_train, alpha=0.01):
+    n_bootstraps = 1000
+    selected_features = []
+
+    for _ in range(n_bootstraps):
+        # Generate a bootstrap sample
+        X_boot, y_boot = resample(x_train, y_train, random_state=np.random.randint(0, 100))
+
+        # Fit a Lasso regression model
+        lasso = Lasso(alpha=alpha)
+        lasso.fit(X_boot, y_boot)
+        selected_indices = np.where(lasso.coef_ != 0)[0]
+        selected_features.append(selected_indices)
+
+    feature_selection_count = np.bincount(np.concatenate(selected_features))
+
+    threshold = n_bootstraps // 2
+    final_selected_features = np.where(feature_selection_count >= threshold)[0]
+
+    print("Selected Features:", final_selected_features)
+    X_selected = x_train.iloc[:, final_selected_features]
+    return final_selected_features, X_selected
+
+
 def main():
-    # Your main program logic goes here
     x_train, y_train, x_test, y_test = loading_data()
     y_train = y_train.values.ravel()
     # extra_columns_in_train = [col for col in x_train.columns if col not in x_test.columns]
@@ -110,7 +144,9 @@ def main():
 
     # Drop these extra columns from the training dataset
     x_train.drop(extra_columns_in_test, axis=1, inplace=True)
-    SVM_Prediction(x_train, y_train, x_test, y_test)
+    # feature_coefficients_SVM = SVM_Prediction(x_train, y_train, x_test, y_test)
+    Lasso_selected_features, X_Lasso_selected_features = BoLasso(x_train, y_train)
+    print(X_Lasso_selected_features)
 
 
 if __name__ == "__main__":
