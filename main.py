@@ -55,7 +55,7 @@ def loading_data():
 
 
 def SVM_l2_regularization_Kfold(x_train, y_train):
-    class_weights = {-1: 1, 1: 5}
+    class_weights = {-1: 5, 1: 1}
 
     k = 5  # Number of folds for cross-validation
     C_values = [0.001, 0.01, 0.1, 1, 10]
@@ -80,7 +80,7 @@ def SVM_l2_regularization_Kfold(x_train, y_train):
 
 
 def SVM_Prediction(x_train, y_train, x_test, y_test):
-    class_weights = {-1: 1, 1: 5}
+    class_weights = {-1: 5, 1: 1}
     svm_classifier = SVC(kernel='linear', C=0.01, class_weight=class_weights)
     svm_classifier.fit(x_train, y_train)
 
@@ -97,12 +97,14 @@ def SVM_Prediction(x_train, y_train, x_test, y_test):
     coefficients = svm_classifier.coef_
 
     feature_coefficients = dict(zip(feature_names, coefficients[0]))  # Use coefficients[0] for class -1
-
+    conf_matrix = confusion_matrix(y_test, y_pred)
+    print("Confusion Matrix of SVM with L2 regularization:")
+    print(conf_matrix)
     # print(feature_coefficients)
-    return feature_coefficients
+    return feature_coefficients, conf_matrix
 
 
-def Lasso_Regularization(x_train, y_train, x_test, y_test):
+def Lasso_Regularization(x_train, y_train):
     alpha = 0.01
     lasso = Lasso(alpha=alpha)
     lasso.fit(x_train, y_train)
@@ -171,7 +173,9 @@ def Lasso_SVM(x_train, y_train, x_test, y_test):
     # Drop these extra columns from the training dataset
     x_train.drop(extra_columns_in_test, axis=1, inplace=True)
     x_test.drop(extra_columns_in_test, axis=1, inplace=True)
-    feature_coefficients = SVM_Prediction(x_train, y_train, x_test, y_test)
+    feature_coefficients, conf_matrix = SVM_Prediction(x_train, y_train, x_test, y_test)
+    print("Confusion Matrix of SVM with Lasso:")
+    print(conf_matrix)
     return feature_coefficients
 
 
@@ -236,13 +240,15 @@ def main():
     # extra_columns_in_train = [col for col in x_train.columns if col not in x_test.columns]
     # for col in extra_columns_in_train:
     #     x_test[col] = 0
-    # mean_scores = SVM_l2_regularization_Kfold(x_train, y_train)
+    mean_scores = SVM_l2_regularization_Kfold(x_train, y_train)
     extra_columns_in_test = [col for col in x_train.columns if col not in x_test.columns]
 
     # Drop these extra columns from the training dataset
     x_train.drop(extra_columns_in_test, axis=1, inplace=True)
     # scatter_plot_Coefficients(x_train, y_train, x_test, y_test)
-    Random_Forest_tuning_prediction(x_train, y_train, x_test, y_test)
+    # SVM_Prediction(x_train, y_train, x_test, y_test)
+    # Lasso_SVM(x_train, y_train, x_test, y_test)
+    # Random_Forest_tuning_prediction(x_train, y_train, x_test, y_test)
 
 
 if __name__ == "__main__":
