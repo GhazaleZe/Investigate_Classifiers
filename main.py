@@ -98,7 +98,7 @@ def SVM_Prediction(x_train, y_train, x_test, y_test):
 
     feature_coefficients = dict(zip(feature_names, coefficients[0]))  # Use coefficients[0] for class -1
 
-    #print(feature_coefficients)
+    # print(feature_coefficients)
     return feature_coefficients
 
 
@@ -107,7 +107,7 @@ def Lasso_Regularization(x_train, y_train, x_test, y_test):
     lasso = Lasso(alpha=alpha)
     lasso.fit(x_train, y_train)
     selected_features = [feature for feature, coef in enumerate(lasso.coef_) if coef != 0]
-    #print(f'Selected features: {selected_features}')
+    # print(f'Selected features: {selected_features}')
     X_selected = x_train[:, selected_features]
     return X_selected
 
@@ -159,7 +159,7 @@ def BoLasso(x_train, y_train, alpha=0.001):
     threshold = n_bootstraps // 2
     final_selected_features = np.where(feature_selection_count >= threshold)[0]
 
-    #print("Selected Features:", final_selected_features)
+    # print("Selected Features:", final_selected_features)
     X_selected = x_train.iloc[:, final_selected_features]
     return final_selected_features, X_selected
 
@@ -174,6 +174,7 @@ def Lasso_SVM(x_train, y_train, x_test, y_test):
     feature_coefficients = SVM_Prediction(x_train, y_train, x_test, y_test)
     return feature_coefficients
 
+
 def scatter_plot_Coefficients(x_train, y_train, x_test, y_test):
     feature_coefficients_SVM = SVM_Prediction(x_train, y_train, x_test, y_test)
 
@@ -182,7 +183,8 @@ def scatter_plot_Coefficients(x_train, y_train, x_test, y_test):
     for key in feature_coefficients_SVM:
         if key not in feature_coefficients_Lasso:
             feature_coefficients_Lasso[key] = 0
-    sorted_feature_coefficients_Lasso = {key: feature_coefficients_Lasso[key] for key in feature_coefficients_SVM.keys()}
+    sorted_feature_coefficients_Lasso = {key: feature_coefficients_Lasso[key] for key in
+                                         feature_coefficients_SVM.keys()}
     print(feature_coefficients_SVM)
     print(sorted_feature_coefficients_Lasso)
     x_values = list(feature_coefficients_SVM.values())
@@ -196,6 +198,7 @@ def scatter_plot_Coefficients(x_train, y_train, x_test, y_test):
     plt.title('Comparing Coefficients L2 and L1')
     plt.legend()
     plt.show()
+
 
 def Random_Forest_tuning_prediction(x_train, y_train, x_test, y_test):
     random_forest = RandomForestClassifier(random_state=42)
@@ -212,11 +215,12 @@ def Random_Forest_tuning_prediction(x_train, y_train, x_test, y_test):
     grid_search = GridSearchCV(random_forest, param_grid, cv=5)
     grid_search.fit(x_train, y_train)
 
-    #best hyperparameters
+    # best hyperparameters
     best_params = grid_search.best_params_
     # grid_results = grid_search.cv_results_
     # print("This is grid search", grid_results)
-    best_random_forest = RandomForestClassifier(random_state=42, n_estimators = 50, max_depth= 5 ,min_samples_split = 2 ,min_samples_leaf = 1)
+    best_random_forest = RandomForestClassifier(random_state=42, n_estimators=50, max_depth=5, min_samples_split=2,
+                                                min_samples_leaf=1)
     best_random_forest.fit(x_train, y_train)
     y_pred = best_random_forest.predict(x_test)
     accuracy = accuracy_score(y_test, y_pred)
@@ -237,9 +241,8 @@ def main():
 
     # Drop these extra columns from the training dataset
     x_train.drop(extra_columns_in_test, axis=1, inplace=True)
-    #scatter_plot_Coefficients(x_train, y_train, x_test, y_test)
+    # scatter_plot_Coefficients(x_train, y_train, x_test, y_test)
     Random_Forest_tuning_prediction(x_train, y_train, x_test, y_test)
-
 
 
 if __name__ == "__main__":
