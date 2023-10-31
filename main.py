@@ -7,6 +7,9 @@ from sklearn.model_selection import KFold
 import matplotlib.pyplot as plt
 from sklearn.linear_model import Lasso
 from sklearn.utils import resample
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import confusion_matrix
 
 
 def loading_data():
@@ -171,6 +174,57 @@ def Lasso_SVM(x_train, y_train, x_test, y_test):
     feature_coefficients = SVM_Prediction(x_train, y_train, x_test, y_test)
     return feature_coefficients
 
+def scatter_plot_Coefficients(x_train, y_train, x_test, y_test):
+    feature_coefficients_SVM = SVM_Prediction(x_train, y_train, x_test, y_test)
+
+    # Tuning_Lasso(x_train, y_train)
+    feature_coefficients_Lasso = Lasso_SVM(x_train, y_train, x_test, y_test)
+    for key in feature_coefficients_SVM:
+        if key not in feature_coefficients_Lasso:
+            feature_coefficients_Lasso[key] = 0
+    sorted_feature_coefficients_Lasso = {key: feature_coefficients_Lasso[key] for key in feature_coefficients_SVM.keys()}
+    print(feature_coefficients_SVM)
+    print(sorted_feature_coefficients_Lasso)
+    x_values = list(feature_coefficients_SVM.values())
+    y_values = list(sorted_feature_coefficients_Lasso.values())
+    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.scatter(x_values, y_values, marker='o', c='r', label='Coefficients')
+
+    # Set axis labels and a title
+    plt.xlabel('Coefficients of model 1')
+    plt.ylabel('Coefficients of model 2')
+    plt.title('Comparing Coefficients L2 and L1')
+    plt.legend()
+    plt.show()
+
+def Random_Forest_tuning_prediction(x_train, y_train, x_test, y_test):
+    random_forest = RandomForestClassifier(random_state=42)
+
+    # hyperparameters to search
+    param_grid = {
+        'n_estimators': [50, 100, 150],
+        'max_depth': [None, 5, 15, 25],
+        'min_samples_split': [2, 5, 10],
+        'min_samples_leaf': [1, 2, 4]
+    }
+
+    # grid search to find the best hyperparameters
+    grid_search = GridSearchCV(random_forest, param_grid, cv=5)
+    grid_search.fit(x_train, y_train)
+
+    #best hyperparameters
+    best_params = grid_search.best_params_
+    # grid_results = grid_search.cv_results_
+    # print("This is grid search", grid_results)
+    best_random_forest = RandomForestClassifier(random_state=42, n_estimators = 50, max_depth= 5 ,min_samples_split = 2 ,min_samples_leaf = 1)
+    best_random_forest.fit(x_train, y_train)
+    y_pred = best_random_forest.predict(x_test)
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"Best Model Accuracy: {accuracy:.2f}")
+    conf_matrix = confusion_matrix(y_test, y_pred)
+    print("Confusion Matrix:")
+    print(conf_matrix)
+
 
 def main():
     x_train, y_train, x_test, y_test = loading_data()
@@ -183,16 +237,9 @@ def main():
 
     # Drop these extra columns from the training dataset
     x_train.drop(extra_columns_in_test, axis=1, inplace=True)
-    feature_coefficients_SVM = SVM_Prediction(x_train, y_train, x_test, y_test)
+    #scatter_plot_Coefficients(x_train, y_train, x_test, y_test)
+    Random_Forest_tuning_prediction(x_train, y_train, x_test, y_test)
 
-    # Tuning_Lasso(x_train, y_train)
-    feature_coefficients_Lasso = Lasso_SVM(x_train, y_train, x_test, y_test)
-    for key in feature_coefficients_SVM:
-        if key not in feature_coefficients_Lasso:
-            feature_coefficients_Lasso[key] = 0
-    sorted_feature_coefficients_Lasso = {key: feature_coefficients_Lasso[key] for key in sorted(feature_coefficients_Lasso)}
-    print(feature_coefficients_SVM)
-    print(sorted_feature_coefficients_Lasso)
 
 
 if __name__ == "__main__":
