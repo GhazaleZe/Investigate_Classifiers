@@ -58,7 +58,7 @@ def SVM_l2_regularization_Kfold(x_train, y_train):
     class_weights = {-1: 5, 1: 1}
 
     k = 5  # Number of folds for cross-validation
-    C_values = [0.001, 0.01, 0.1, 1, 10]
+    C_values = [0.0001, 0.001, 0.01, 1]
     mean_scores = []
 
     for c in C_values:
@@ -81,7 +81,7 @@ def SVM_l2_regularization_Kfold(x_train, y_train):
 
 def SVM_Prediction(x_train, y_train, x_test, y_test):
     class_weights = {-1: 5, 1: 1}
-    svm_classifier = SVC(kernel='linear', C=0.01, class_weight=class_weights)
+    svm_classifier = SVC(kernel='linear', C=0.001, class_weight=class_weights)
     svm_classifier.fit(x_train, y_train)
 
     # Make predictions on the test data
@@ -180,7 +180,7 @@ def Lasso_SVM(x_train, y_train, x_test, y_test):
 
 
 def scatter_plot_Coefficients(x_train, y_train, x_test, y_test):
-    feature_coefficients_SVM = SVM_Prediction(x_train, y_train, x_test, y_test)
+    feature_coefficients_SVM, c = SVM_Prediction(x_train, y_train, x_test, y_test)
 
     # Tuning_Lasso(x_train, y_train)
     feature_coefficients_Lasso = Lasso_SVM(x_train, y_train, x_test, y_test)
@@ -219,18 +219,21 @@ def Random_Forest_tuning_prediction(x_train, y_train, x_test, y_test):
     grid_search = GridSearchCV(random_forest, param_grid, cv=5)
     grid_search.fit(x_train, y_train)
 
-    # best hyperparameters
+    # selected hyperparameters
     best_params = grid_search.best_params_
     # grid_results = grid_search.cv_results_
     # print("This is grid search", grid_results)
-    best_random_forest = RandomForestClassifier(random_state=42, n_estimators=50, max_depth=5, min_samples_split=2,
-                                                min_samples_leaf=1)
+    class_weights = {
+        -1: 5.0,
+        1: 1, }
+    best_random_forest = RandomForestClassifier(class_weight=class_weights, random_state=42, n_estimators=50,
+                                                max_depth=5, min_samples_split=2, min_samples_leaf=1)
     best_random_forest.fit(x_train, y_train)
     y_pred = best_random_forest.predict(x_test)
     accuracy = accuracy_score(y_test, y_pred)
-    print(f"Best Model Accuracy: {accuracy:.2f}")
+    print(f"Random Forest Accuracy: {accuracy:.2f}")
     conf_matrix = confusion_matrix(y_test, y_pred)
-    print("Confusion Matrix:")
+    print("Random Confusion Matrix:")
     print(conf_matrix)
 
 
@@ -240,15 +243,15 @@ def main():
     # extra_columns_in_train = [col for col in x_train.columns if col not in x_test.columns]
     # for col in extra_columns_in_train:
     #     x_test[col] = 0
-    mean_scores = SVM_l2_regularization_Kfold(x_train, y_train)
+    # mean_scores = SVM_l2_regularization_Kfold(x_train, y_train)
     extra_columns_in_test = [col for col in x_train.columns if col not in x_test.columns]
 
     # Drop these extra columns from the training dataset
     x_train.drop(extra_columns_in_test, axis=1, inplace=True)
     # scatter_plot_Coefficients(x_train, y_train, x_test, y_test)
-    # SVM_Prediction(x_train, y_train, x_test, y_test)
-    # Lasso_SVM(x_train, y_train, x_test, y_test)
-    # Random_Forest_tuning_prediction(x_train, y_train, x_test, y_test)
+    SVM_Prediction(x_train, y_train, x_test, y_test)
+    Lasso_SVM(x_train, y_train, x_test, y_test)
+    Random_Forest_tuning_prediction(x_train, y_train, x_test, y_test)
 
 
 if __name__ == "__main__":
